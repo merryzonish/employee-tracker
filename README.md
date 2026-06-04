@@ -1,58 +1,229 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Employee Tracker — Laravel Sanctum REST API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A secure, token-based REST API built with Laravel 13 and Laravel Sanctum for the Employee Tracker system. This API handles employee authentication and serves as the backend foundation for monitoring employee activity and screenshots.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Tech Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Technology | Purpose |
+|------------|---------|
+| Laravel 13 | PHP Backend Framework |
+| Laravel Sanctum | API Token Authentication |
+| MySQL | Database |
+| PHP 8.4 | Programming Language |
+| Composer | Dependency Manager |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Setup Instructions
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
+### 1. Clone the Repository
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/merryzonish/employee-tracker.git
+cd employee-tracker
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### 2. Install Dependencies
+```bash
+composer install
+```
 
-## Contributing
+### 3. Configure Environment
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Update your `.env` file with database credentials:
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=employee_tracker
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-## Code of Conduct
+### 4. Run Migrations
+```bash
+php artisan migrate
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 5. Seed the Database (10 Predefined Users)
+```bash
+php artisan db:seed
+```
 
-## Security Vulnerabilities
+### 6. Start the Development Server
+```bash
+php artisan serve
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Server will run at: `http://127.0.0.1:8000`
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## API Endpoints
+
+### Base URL
+```
+http://127.0.0.1:8000/api
+```
+
+---
+
+### 1. Login
+
+**Endpoint:** `POST /api/login`
+
+**Description:** Authenticates a user and returns a Sanctum API token.
+
+**Request Headers:**
+```
+Content-Type: application/json
+Accept: application/json
+```
+
+**Request Body:**
+```json
+{
+    "email": "ali@company.com",
+    "password": "password123"
+}
+```
+
+**Success Response** `200 OK`:
+```json
+{
+    "message": "Login successful",
+    "token": "1|your_generated_token_here",
+    "token_type": "Bearer",
+    "user": {
+        "id": 1,
+        "name": "Ali Hassan",
+        "email": "ali@company.com",
+        "email_verified_at": null,
+        "created_at": "2026-06-04T10:49:05.000000Z",
+        "updated_at": "2026-06-04T10:49:05.000000Z"
+    }
+}
+```
+
+**Error Response** `401 Unauthorized`:
+```json
+{
+    "message": "Invalid credentials"
+}
+```
+
+---
+
+### 2. Logout
+
+**Endpoint:** `POST /api/logout`
+
+**Description:** Revokes the current user's API token.
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+Accept: application/json
+```
+
+**Success Response** `200 OK`:
+```json
+{
+    "message": "Logged out successfully"
+}
+```
+
+**Error Response** `401 Unauthorized`:
+```json
+{
+    "message": "Unauthenticated."
+}
+```
+
+---
+
+## Authentication
+
+This API uses Laravel Sanctum for token-based authentication.
+
+1. Call `POST /api/login` with valid credentials
+2. Copy the `token` from the response
+3. Add it to the `Authorization` header of all protected requests:
+```
+Authorization: Bearer {your_token_here}
+```
+
+---
+
+## Predefined Test Users
+
+All users have the default password: `password123`
+
+| # | Name | Email |
+|---|------|-------|
+| 1 | Ali Hassan | ali@company.com |
+| 2 | Sara Khan | sara@company.com |
+| 3 | Usman Ahmed | usman@company.com |
+| 4 | Fatima Noor | fatima@company.com |
+| 5 | Bilal Raza | bilal@company.com |
+| 6 | Ayesha Malik | ayesha@company.com |
+| 7 | Hamza Sheikh | hamza@company.com |
+| 8 | Zara Hussain | zara@company.com |
+| 9 | Omar Farooq | omar@company.com |
+| 10 | Hina Baig | hina@company.com |
+
+---
+
+## Project Structure
+
+```
+employee-tracker/
+├── app/
+│   ├── Http/
+│   │   └── Controllers/
+│   │       └── AuthController.php   # Login & Logout logic
+│   └── Models/
+│       └── User.php                 # User model with Sanctum
+├── database/
+│   ├── migrations/                  # Database tables
+│   └── seeders/
+│       ├── DatabaseSeeder.php       # Runs all seeders
+│       └── UserSeeder.php           # 10 predefined users
+├── routes/
+│   └── api.php                      # API routes
+└── config/
+    └── sanctum.php                  # Sanctum configuration
+```
+
+---
+
+## Quick Command Reference
+
+```bash
+# Install dependencies
+composer install
+
+# Run migrations
+php artisan migrate
+
+# Seed database
+php artisan db:seed
+
+# Run migrations and seed together
+php artisan migrate --seed
+
+# Start server
+php artisan serve
+```
+
+---
+
+## Developer
+
+**Merry Zonish**
+GitHub: [@merryzonish](https://github.com/merryzonish)
