@@ -223,6 +223,17 @@ php artisan serve
 
 ---
 
+
+## Screenshots
+
+### Login API
+
+![Login API](screenshots/login-api.png)
+
+### Logout API
+
+![Logout API](screenshots/logout-api.png)
+
 ## Developer
 
 **Merry Zonish**
