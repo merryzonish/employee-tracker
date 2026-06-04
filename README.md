@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Employee Tracker — Laravel Sanctum REST API
 
 A secure, token-based REST API built with Laravel 13 and Laravel Sanctum for the Employee Tracker system. This API handles employee authentication and serves as the backend foundation for monitoring employee activity and screenshots.
@@ -238,3 +239,6 @@ php artisan serve
 
 **Merry Zonish**
 GitHub: [@merryzonish](https://github.com/merryzonish)
+=======
+# employee-tracker
+>>>>>>> 729bff0a1574d736f97b4d93d54972aa0f933f03
