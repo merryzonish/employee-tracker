@@ -10,6 +10,10 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
+ \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+    \App\Models\User::truncate();
+    \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
         $users = [
             ['name' => 'Ali Hassan',   'email' => 'ali@company.com'],
             ['name' => 'Sara Khan',    'email' => 'sara@company.com'],
