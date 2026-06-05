@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\UserScreenshot;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
@@ -30,4 +31,10 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+public function screenshots()
+{
+    return $this->hasMany(UserScreenshot::class);
 }
+
+
+    }
