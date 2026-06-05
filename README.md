@@ -1,6 +1,7 @@
+
 # Employee Tracker — Laravel Sanctum REST API
 
-A secure, token-based REST API built with Laravel 13 and Laravel Sanctum for the Employee Tracker system. This API handles employee authentication and serves as the backend foundation for monitoring employee activity and screenshots.
+A secure, token-based REST API built with Laravel 13 and Laravel Sanctum for the Employee Tracker system. This API handles employee authentication and screenshot management for monitoring employee activity.
 
 ---
 
@@ -103,7 +104,6 @@ Accept: application/json
         "id": 1,
         "name": "Ali Hassan",
         "email": "ali@company.com",
-        "email_verified_at": null,
         "created_at": "2026-06-04T10:49:05.000000Z",
         "updated_at": "2026-06-04T10:49:05.000000Z"
     }
@@ -142,6 +142,117 @@ Accept: application/json
 ```json
 {
     "message": "Unauthenticated."
+}
+```
+
+---
+
+### 3. Store Screenshot (Automatic Upload)
+
+**Endpoint:** `POST /api/screenshots/store`
+
+**Description:** Receives a screenshot file from the client application and saves it to the server. Used for automatic periodic uploads based on a configured interval.
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+```
+
+**Request Body:** `form-data`
+
+| Key | Type | Value |
+|-----|------|-------|
+| screenshot | File | image file (png, jpg, jpeg, max 5MB) |
+| screenshot_time | Text | 2026-06-05 14:30:00 |
+
+**Success Response** `201 Created`:
+```json
+{
+    "message": "Screenshot uploaded successfully",
+    "data": {
+        "id": 1,
+        "user_id": 1,
+        "file_path": "screenshots/ali@company.com/filename.png",
+        "screenshot_time": "2026-06-05 14:30:00",
+        "created_at": "2026-06-05T04:11:26.000000Z",
+        "updated_at": "2026-06-05T04:11:26.000000Z"
+    }
+}
+```
+
+---
+
+### 4. Capture Screenshot (Real-Time)
+
+**Endpoint:** `POST /api/screenshots/capture`
+
+**Description:** Admin triggers a real-time screenshot capture for a specific user. The client application captures the screen instantly and uploads it to the server.
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+```
+
+**Request Body:** `form-data`
+
+| Key | Type | Value |
+|-----|------|-------|
+| user_id | Text | 2 |
+| screenshot | File | image file (png, jpg, jpeg, max 5MB) |
+
+**Success Response** `201 Created`:
+```json
+{
+    "message": "Real-time screenshot captured successfully",
+    "data": {
+        "id": 2,
+        "user_id": 2,
+        "file_path": "screenshots/sara@company.com/capture_filename.png",
+        "screenshot_time": "2026-06-05T04:18:30.000000Z",
+        "created_at": "2026-06-05T04:18:30.000000Z",
+        "updated_at": "2026-06-05T04:18:30.000000Z"
+    }
+}
+```
+
+---
+
+### 5. Fetch Screenshots
+
+**Endpoint:** `GET /api/screenshots`
+
+**Description:** Returns paginated screenshot records for the authenticated user, sorted by latest first. Supports optional date filtering.
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+```
+
+**Optional Query Parameter:**
+```
+?date=2026-06-05
+```
+
+**Success Response** `200 OK`:
+```json
+{
+    "message": "Screenshots fetched successfully",
+    "data": {
+        "current_page": 1,
+        "data": [
+            {
+                "id": 1,
+                "user_id": 1,
+                "file_path": "screenshots/ali@company.com/filename.png",
+                "screenshot_time": "2026-06-05 14:30:00",
+                "created_at": "2026-06-05T04:11:26.000000Z",
+                "updated_at": "2026-06-05T04:11:26.000000Z"
+            }
+        ],
+        "total": 1,
+        "per_page": 10,
+        "last_page": 1
+    }
 }
 ```
 
@@ -186,18 +297,20 @@ employee-tracker/
 ├── app/
 │   ├── Http/
 │   │   └── Controllers/
-│   │       └── AuthController.php   # Login & Logout logic
+│   │       ├── AuthController.php              # Login & Logout logic
+│   │       └── UserScreenshotController.php    # Screenshot upload & fetch logic
 │   └── Models/
-│       └── User.php                 # User model with Sanctum
+│       ├── User.php                            # User model with Sanctum
+│       └── UserScreenshot.php                  # Screenshot model
 ├── database/
-│   ├── migrations/                  # Database tables
+│   ├── migrations/                             # Database tables
 │   └── seeders/
-│       ├── DatabaseSeeder.php       # Runs all seeders
-│       └── UserSeeder.php           # 10 predefined users
+│       ├── DatabaseSeeder.php                  # Runs all seeders
+│       └── UserSeeder.php                      # 10 predefined users
 ├── routes/
-│   └── api.php                      # API routes
+│   └── api.php                                 # API routes
 └── config/
-    └── sanctum.php                  # Sanctum configuration
+    └── sanctum.php                             # Sanctum configuration
 ```
 
 ---
@@ -223,18 +336,9 @@ php artisan serve
 
 ---
 
-
-## Screenshots
-
-### Login API
-
-![Login API](screenshots/login-api.png)
-
-### Logout API
-
-![Logout API](screenshots/logout-api.png)
-
 ## Developer
 
 **Merry Zonish**
 GitHub: [@merryzonish](https://github.com/merryzonish)
+```
+
