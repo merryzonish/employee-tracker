@@ -1,4 +1,3 @@
-
 # Employee Tracker — Laravel Sanctum REST API
 
 A secure, token-based REST API built with Laravel 13 and Laravel Sanctum for the Employee Tracker system. This API handles employee authentication and screenshot management for monitoring employee activity.
@@ -11,6 +10,7 @@ A secure, token-based REST API built with Laravel 13 and Laravel Sanctum for the
 |------------|---------|
 | Laravel 13 | PHP Backend Framework |
 | Laravel Sanctum | API Token Authentication |
+| Laravel Storage | Screenshot File Management |
 | MySQL | Database |
 | PHP 8.4 | Programming Language |
 | Composer | Dependency Manager |
@@ -56,12 +56,29 @@ php artisan migrate
 php artisan db:seed
 ```
 
-### 6. Start the Development Server
+### 6. Create Storage Symlink
+```bash
+php artisan storage:link
+```
+
+This command links `public/storage` to `storage/app/public` so uploaded screenshots are accessible via URL.
+
+### 7. Start the Development Server
 ```bash
 php artisan serve
 ```
 
 Server will run at: `http://127.0.0.1:8000`
+
+---
+
+## Storage Configuration
+
+This project uses **Laravel Storage** with the `public` disk for managing screenshot files.
+
+- Screenshots are stored in: `storage/app/public/screenshots/{user_email}/`
+- Files are accessible via: `http://127.0.0.1:8000/storage/screenshots/{user_email}/{filename}`
+- All file operations use Laravel's `Storage` facade
 
 ---
 
@@ -151,7 +168,7 @@ Accept: application/json
 
 **Endpoint:** `POST /api/screenshots/store`
 
-**Description:** Receives a screenshot file from the client application and saves it to the server. Used for automatic periodic uploads based on a configured interval.
+**Description:** Receives a screenshot file from the client application and saves it to Laravel Storage. Used for automatic periodic uploads.
 
 **Request Headers:**
 ```
@@ -186,7 +203,7 @@ Authorization: Bearer {your_token_here}
 
 **Endpoint:** `POST /api/screenshots/capture`
 
-**Description:** Admin triggers a real-time screenshot capture for a specific user. The client application captures the screen instantly and uploads it to the server.
+**Description:** Admin triggers a real-time screenshot capture for a specific user. The screenshot is saved to Laravel Storage under that user's directory.
 
 **Request Headers:**
 ```
@@ -309,6 +326,11 @@ employee-tracker/
 │       └── UserSeeder.php                      # 10 predefined users
 ├── routes/
 │   └── api.php                                 # API routes
+├── storage/
+│   └── app/
+│       └── public/
+│           └── screenshots/                    # Screenshot files stored here
+│               └── {user_email}/               # Organized by user email
 └── config/
     └── sanctum.php                             # Sanctum configuration
 ```
@@ -330,6 +352,9 @@ php artisan db:seed
 # Run migrations and seed together
 php artisan migrate --seed
 
+# Create storage symlink
+php artisan storage:link
+
 # Start server
 php artisan serve
 ```
@@ -340,5 +365,3 @@ php artisan serve
 
 **Merry Zonish**
 GitHub: [@merryzonish](https://github.com/merryzonish)
-```
-
