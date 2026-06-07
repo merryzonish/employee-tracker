@@ -6,6 +6,7 @@ use App\Models\UserScreenshot;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\JsonResponse;
 
 class UserScreenshotController extends Controller
 {
@@ -96,4 +97,29 @@ $screenshot = UserScreenshot::create([
             'data'    => $screenshots,
         ]);
     }
+    /**
+ * Deletes a screenshot record and its associated file.
+ */
+public function destroy(Request $request): JsonResponse
+{
+    $request->validate([
+        'id' => 'required|integer|exists:user_screenshots,id',
+    ]);
+
+    $screenshot = UserScreenshot::where('id', $request->id)
+        ->where('user_id', $request->user()->id)
+        ->firstOrFail();
+
+    // Delete file from storage
+    $filePath = public_path($screenshot->file_path);
+    if (file_exists($filePath)) {
+        unlink($filePath);
+    }
+
+    $screenshot->delete();
+
+    return response()->json([
+        'message' => 'Screenshot deleted successfully',
+    ]);
+}
 }

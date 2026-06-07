@@ -1,6 +1,6 @@
 # Employee Tracker — Laravel Sanctum REST API
 
-A secure, token-based REST API built with Laravel 13 and Laravel Sanctum for the Employee Tracker system. This API handles employee authentication and screenshot management for monitoring employee activity.
+A secure, token-based REST API built with Laravel 13 and Laravel Sanctum for the Employee Tracker system. This API handles employee authentication, screenshot management, and real-time activity tracking for monitoring employee productivity.
 
 ---
 
@@ -168,7 +168,7 @@ Accept: application/json
 
 **Endpoint:** `POST /api/screenshots/store`
 
-**Description:** Receives a screenshot file from the client application and saves it to Laravel Storage. Used for automatic periodic uploads.
+**Description:** Receives a screenshot file from the client application and saves it to Laravel Storage. Used for automatic periodic uploads based on a configured interval.
 
 **Request Headers:**
 ```
@@ -275,6 +275,137 @@ Authorization: Bearer {your_token_here}
 
 ---
 
+### 6. Delete Screenshot
+
+**Endpoint:** `POST /api/screenshots/delete`
+
+**Description:** Deletes a specific screenshot record and its associated file from storage. Only the owner of the screenshot can delete it.
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+    "id": 1
+}
+```
+
+**Success Response** `200 OK`:
+```json
+{
+    "message": "Screenshot deleted successfully"
+}
+```
+
+**Error Response** `404 Not Found`:
+```json
+{
+    "message": "No query results for model [App\\Models\\UserScreenshot]."
+}
+```
+
+---
+
+### 7. Track Activity
+
+**Endpoint:** `POST /api/track/activity`
+
+**Description:** Receives activity data from the desktop tracker application. Records app usage, mouse clicks, keystrokes, and idle status for the authenticated user.
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+    "app_name": "Visual Studio Code",
+    "window_title": "UserActivityController.php",
+    "clicks": 25,
+    "keystrokes": 120,
+    "is_idle": false,
+    "tracked_at": "2026-06-07 12:00:00"
+}
+```
+
+**Success Response** `201 Created`:
+```json
+{
+    "message": "Activity tracked successfully",
+    "data": {
+        "id": 1,
+        "user_id": 1,
+        "app_name": "Visual Studio Code",
+        "window_title": "UserActivityController.php",
+        "clicks": 25,
+        "keystrokes": 120,
+        "is_idle": false,
+        "tracked_at": "2026-06-07T12:00:00.000000Z",
+        "created_at": "2026-06-07T11:35:07.000000Z",
+        "updated_at": "2026-06-07T11:35:07.000000Z"
+    }
+}
+```
+
+---
+
+### 8. Activity Stats
+
+**Endpoint:** `GET /api/track/activity/stats`
+
+**Description:** Returns paginated activity records and a summary of total clicks, keystrokes, and active/idle counts for the authenticated user. Supports optional date filtering.
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+```
+
+**Optional Query Parameter:**
+```
+?date=2026-06-07
+```
+
+**Success Response** `200 OK`:
+```json
+{
+    "message": "Activity stats fetched successfully",
+    "summary": {
+        "total_clicks": "25",
+        "total_keystrokes": "120",
+        "idle_count": "0",
+        "active_count": "1"
+    },
+    "activities": {
+        "current_page": 1,
+        "data": [
+            {
+                "id": 1,
+                "user_id": 1,
+                "app_name": "Visual Studio Code",
+                "window_title": "UserActivityController.php",
+                "clicks": 25,
+                "keystrokes": 120,
+                "is_idle": false,
+                "tracked_at": "2026-06-07T12:00:00.000000Z",
+                "created_at": "2026-06-07T11:35:07.000000Z",
+                "updated_at": "2026-06-07T11:35:07.000000Z"
+            }
+        ],
+        "total": 1,
+        "per_page": 10,
+        "last_page": 1
+    }
+}
+```
+
+---
+
 ## Authentication
 
 This API uses Laravel Sanctum for token-based authentication.
@@ -307,6 +438,17 @@ All users have the default password: `password123`
 
 ---
 
+## Database Tables
+
+| Table | Purpose |
+|-------|---------|
+| users | Stores employee accounts |
+| personal_access_tokens | Sanctum API tokens |
+| user_screenshots | Screenshot records with file paths |
+| user_activities | Employee activity tracking data |
+
+---
+
 ## Project Structure
 
 ```
@@ -315,17 +457,19 @@ employee-tracker/
 │   ├── Http/
 │   │   └── Controllers/
 │   │       ├── AuthController.php              # Login & Logout logic
-│   │       └── UserScreenshotController.php    # Screenshot upload & fetch logic
+│   │       ├── UserScreenshotController.php    # Screenshot upload, fetch & delete
+│   │       └── UserActivityController.php      # Activity tracking & stats
 │   └── Models/
 │       ├── User.php                            # User model with Sanctum
-│       └── UserScreenshot.php                  # Screenshot model
+│       ├── UserScreenshot.php                  # Screenshot model
+│       └── UserActivity.php                    # Activity model
 ├── database/
 │   ├── migrations/                             # Database tables
 │   └── seeders/
 │       ├── DatabaseSeeder.php                  # Runs all seeders
 │       └── UserSeeder.php                      # 10 predefined users
 ├── routes/
-│   └── api.php                                 # API routes
+│   └── api.php                                 # All API routes
 ├── storage/
 │   └── app/
 │       └── public/
@@ -334,6 +478,21 @@ employee-tracker/
 └── config/
     └── sanctum.php                             # Sanctum configuration
 ```
+
+---
+
+## API Routes Summary
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | /api/login | User login | No |
+| POST | /api/logout | User logout | Yes |
+| GET | /api/screenshots | Fetch screenshots | Yes |
+| POST | /api/screenshots/store | Upload screenshot | Yes |
+| POST | /api/screenshots/capture | Real-time capture | Yes |
+| POST | /api/screenshots/delete | Delete screenshot | Yes |
+| POST | /api/track/activity | Track activity | Yes |
+| GET | /api/track/activity/stats | Activity stats | Yes |
 
 ---
 
