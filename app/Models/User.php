@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\UserActivity;
 use App\Models\UserScreenshot;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -11,7 +12,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use App\Models\UserActivity;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
@@ -30,6 +30,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
+            'can_user_logout'   => 'boolean',
+            'allowed_ips'       => 'array',
         ];
     }
 
@@ -42,10 +44,10 @@ class User extends Authenticatable
     }
 
     /**
- * Get all activities belonging to this user.
- */
-public function activities(): HasMany
-{
-    return $this->hasMany(UserActivity::class);
-}
+     * Get all activities belonging to this user.
+     */
+    public function activities(): HasMany
+    {
+        return $this->hasMany(UserActivity::class);
+    }
 }
