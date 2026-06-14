@@ -1,6 +1,6 @@
 # Employee Tracker — Laravel Sanctum REST API
 
-A secure, token-based REST API built with Laravel 13 and Laravel Sanctum for the Employee Tracker system. This API handles employee authentication, screenshot management, and real-time activity tracking for monitoring employee productivity.
+A secure, token-based REST API built with Laravel 13 and Laravel Sanctum for the Employee Tracker system. This API handles employee authentication, screenshot management, activity tracking, configuration management, and user data modules.
 
 ---
 
@@ -10,7 +10,7 @@ A secure, token-based REST API built with Laravel 13 and Laravel Sanctum for the
 |------------|---------|
 | Laravel 13 | PHP Backend Framework |
 | Laravel Sanctum | API Token Authentication |
-| Laravel Storage | Screenshot File Management |
+| Laravel Storage | File Management |
 | MySQL | Database |
 | PHP 8.4 | Programming Language |
 | Composer | Dependency Manager |
@@ -61,7 +61,7 @@ php artisan db:seed
 php artisan storage:link
 ```
 
-This command links `public/storage` to `storage/app/public` so uploaded screenshots are accessible via URL.
+This command links `public/storage` to `storage/app/public` so uploaded files are accessible via URL.
 
 ### 7. Start the Development Server
 ```bash
@@ -74,9 +74,10 @@ Server will run at: `http://127.0.0.1:8000`
 
 ## Storage Configuration
 
-This project uses **Laravel Storage** with the `public` disk for managing screenshot files.
+This project uses **Laravel Storage** with the `public` disk for managing files.
 
 - Screenshots are stored in: `storage/app/public/screenshots/{user_email}/`
+- Media files are stored in: `public/media/{user_email}/`
 - Files are accessible via: `http://127.0.0.1:8000/storage/screenshots/{user_email}/{filename}`
 - All file operations use Laravel's `Storage` facade
 
@@ -140,7 +141,7 @@ Accept: application/json
 
 **Endpoint:** `POST /api/logout`
 
-**Description:** Revokes the current user's API token.
+**Description:** Revokes the current user's API token. Respects global and user-level logout restrictions.
 
 **Request Headers:**
 ```
@@ -155,10 +156,10 @@ Accept: application/json
 }
 ```
 
-**Error Response** `401 Unauthorized`:
+**Error Response** `403 Forbidden`:
 ```json
 {
-    "message": "Unauthenticated."
+    "message": "Logout is restricted for your account."
 }
 ```
 
@@ -203,7 +204,7 @@ Authorization: Bearer {your_token_here}
 
 **Endpoint:** `POST /api/screenshots/capture`
 
-**Description:** Admin triggers a real-time screenshot capture for a specific user. The screenshot is saved to Laravel Storage under that user's directory.
+**Description:** Admin triggers a real-time screenshot capture for a specific user.
 
 **Request Headers:**
 ```
@@ -279,7 +280,7 @@ Authorization: Bearer {your_token_here}
 
 **Endpoint:** `POST /api/screenshots/delete`
 
-**Description:** Deletes a specific screenshot record and its associated file from storage. Only the owner of the screenshot can delete it.
+**Description:** Deletes a specific screenshot record and its associated file from storage.
 
 **Request Headers:**
 ```
@@ -301,20 +302,13 @@ Content-Type: application/json
 }
 ```
 
-**Error Response** `404 Not Found`:
-```json
-{
-    "message": "No query results for model [App\\Models\\UserScreenshot]."
-}
-```
-
 ---
 
 ### 7. Track Activity
 
 **Endpoint:** `POST /api/track/activity`
 
-**Description:** Receives activity data from the desktop tracker application. Records app usage, mouse clicks, keystrokes, and idle status for the authenticated user.
+**Description:** Receives activity data from the desktop tracker application.
 
 **Request Headers:**
 ```
@@ -359,7 +353,7 @@ Content-Type: application/json
 
 **Endpoint:** `GET /api/track/activity/stats`
 
-**Description:** Returns paginated activity records and a summary of total clicks, keystrokes, and active/idle counts for the authenticated user. Supports optional date filtering.
+**Description:** Returns paginated activity records and summary stats. Supports optional date filtering.
 
 **Request Headers:**
 ```
@@ -383,18 +377,399 @@ Authorization: Bearer {your_token_here}
     },
     "activities": {
         "current_page": 1,
+        "data": [],
+        "total": 1,
+        "per_page": 10,
+        "last_page": 1
+    }
+}
+```
+
+---
+
+### 9. List Configurations
+
+**Endpoint:** `GET /api/configs`
+
+**Description:** Returns all system configurations.
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+```
+
+**Success Response** `200 OK`:
+```json
+{
+    "message": "Configurations fetched successfully",
+    "data": {
+        "tracker_screenshot_interval": 5,
+        "tracker_api_url": "https://api.example.com",
+        "tracker_admin_password": "secret-password",
+        "tracker_allowed_ips": ["192.168.1.10", "10.0.0.5"],
+        "tracker_logout_restriction": true
+    }
+}
+```
+
+---
+
+### 10. Create Configuration
+
+**Endpoint:** `POST /api/configs`
+
+**Description:** Creates a new system configuration entry.
+
+**Supported Keys:** `tracker_screenshot_interval`, `tracker_api_url`, `tracker_admin_password`, `tracker_allowed_ips`, `tracker_logout_restriction`
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+    "key": "tracker_screenshot_interval",
+    "value": 5
+}
+```
+
+**Success Response** `201 Created`:
+```json
+{
+    "message": "Configuration created successfully",
+    "data": {
+        "id": 1,
+        "key": "tracker_screenshot_interval",
+        "value": 5,
+        "created_at": "2026-06-09T10:50:20.000000Z",
+        "updated_at": "2026-06-09T10:50:20.000000Z"
+    }
+}
+```
+
+---
+
+### 11. Update Configuration
+
+**Endpoint:** `PUT /api/configs/{key}`
+
+**Description:** Updates an existing configuration by its key.
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+    "value": 10
+}
+```
+
+**Success Response** `200 OK`:
+```json
+{
+    "message": "Configuration updated successfully",
+    "data": {
+        "id": 1,
+        "key": "tracker_screenshot_interval",
+        "value": 10,
+        "created_at": "2026-06-09T10:50:20.000000Z",
+        "updated_at": "2026-06-09T10:55:04.000000Z"
+    }
+}
+```
+
+---
+
+### 12. List User Contacts
+
+**Endpoint:** `GET /api/contacts`
+
+**Description:** Returns all contacts for the authenticated user.
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+```
+
+**Success Response** `200 OK`:
+```json
+{
+    "message": "Contacts fetched successfully",
+    "data": [
+        {
+            "id": 1,
+            "user_id": 1,
+            "type": "work_email",
+            "label": "Office Email",
+            "value": "ali@company.com",
+            "is_primary": true,
+            "is_verified": false,
+            "verified_at": null,
+            "notes": "Primary work email",
+            "created_at": "2026-06-13T19:01:30.000000Z",
+            "updated_at": "2026-06-13T19:01:30.000000Z"
+        }
+    ]
+}
+```
+
+---
+
+### 13. Create User Contact
+
+**Endpoint:** `POST /api/contacts`
+
+**Description:** Stores a new contact record for the authenticated user.
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+    "type": "work_email",
+    "label": "Office Email",
+    "value": "ali@company.com",
+    "is_primary": true,
+    "notes": "Primary work email"
+}
+```
+
+**Success Response** `201 Created`:
+```json
+{
+    "message": "Contact created successfully",
+    "data": {
+        "id": 1,
+        "user_id": 1,
+        "type": "work_email",
+        "label": "Office Email",
+        "value": "ali@company.com",
+        "is_primary": true,
+        "notes": "Primary work email",
+        "created_at": "2026-06-13T19:01:30.000000Z",
+        "updated_at": "2026-06-13T19:01:30.000000Z"
+    }
+}
+```
+
+---
+
+### 14. Update User Contact
+
+**Endpoint:** `PUT /api/contacts/{id}`
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+    "value": "ali.hassan@company.com",
+    "label": "Updated Office Email"
+}
+```
+
+**Success Response** `200 OK`:
+```json
+{
+    "message": "Contact updated successfully",
+    "data": {
+        "id": 1,
+        "type": "work_email",
+        "label": "Updated Office Email",
+        "value": "ali.hassan@company.com",
+        "updated_at": "2026-06-13T19:04:15.000000Z"
+    }
+}
+```
+
+---
+
+### 15. Delete User Contact
+
+**Endpoint:** `DELETE /api/contacts/{id}`
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+```
+
+**Success Response** `200 OK`:
+```json
+{
+    "message": "Contact deleted successfully"
+}
+```
+
+---
+
+### 16. List Categories
+
+**Endpoint:** `GET /api/categories`
+
+**Description:** Returns all active parent categories with their children.
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+```
+
+**Success Response** `200 OK`:
+```json
+{
+    "message": "Categories fetched successfully",
+    "data": [
+        {
+            "id": 1,
+            "name": "Profile Picture",
+            "slug": "profile-picture",
+            "type": "media",
+            "parent_id": null,
+            "description": "User profile pictures",
+            "is_active": true,
+            "children": []
+        }
+    ]
+}
+```
+
+---
+
+### 17. Create Category
+
+**Endpoint:** `POST /api/categories`
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+    "name": "Resume",
+    "type": "media",
+    "description": "User resume files"
+}
+```
+
+**Success Response** `201 Created`:
+```json
+{
+    "message": "Category created successfully",
+    "data": {
+        "id": 2,
+        "name": "Resume",
+        "slug": "resume",
+        "type": "media",
+        "parent_id": null,
+        "description": "User resume files",
+        "is_active": true,
+        "created_at": "2026-06-13T19:01:46.000000Z",
+        "updated_at": "2026-06-13T19:01:46.000000Z"
+    }
+}
+```
+
+---
+
+### 18. Update Category
+
+**Endpoint:** `PUT /api/categories/{id}`
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+    "name": "Updated Resume",
+    "is_active": false
+}
+```
+
+**Success Response** `200 OK`:
+```json
+{
+    "message": "Category updated successfully",
+    "data": {
+        "id": 2,
+        "name": "Updated Resume",
+        "slug": "updated-resume",
+        "is_active": false,
+        "updated_at": "2026-06-13T20:00:00.000000Z"
+    }
+}
+```
+
+---
+
+### 19. Delete Category
+
+**Endpoint:** `DELETE /api/categories/{id}`
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+```
+
+**Success Response** `200 OK`:
+```json
+{
+    "message": "Category deleted successfully"
+}
+```
+
+---
+
+### 20. List Media
+
+**Endpoint:** `GET /api/media`
+
+**Description:** Returns paginated media records for the authenticated user with category details.
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+```
+
+**Success Response** `200 OK`:
+```json
+{
+    "message": "Media fetched successfully",
+    "data": {
+        "current_page": 1,
         "data": [
             {
                 "id": 1,
                 "user_id": 1,
-                "app_name": "Visual Studio Code",
-                "window_title": "UserActivityController.php",
-                "clicks": 25,
-                "keystrokes": 120,
-                "is_idle": false,
-                "tracked_at": "2026-06-07T12:00:00.000000Z",
-                "created_at": "2026-06-07T11:35:07.000000Z",
-                "updated_at": "2026-06-07T11:35:07.000000Z"
+                "file_path": "media/ali@company.com/filename.png",
+                "category_id": 2,
+                "model_type": null,
+                "model_id": null,
+                "category": {
+                    "id": 2,
+                    "name": "Resume",
+                    "slug": "resume"
+                }
             }
         ],
         "total": 1,
@@ -403,6 +778,80 @@ Authorization: Bearer {your_token_here}
     }
 }
 ```
+
+---
+
+### 21. Upload Media
+
+**Endpoint:** `POST /api/media`
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+```
+
+**Request Body:** `form-data`
+
+| Key | Type | Value |
+|-----|------|-------|
+| file | File | any file (max 10MB) |
+| category_id | Text | 2 |
+| model_type | Text | App\Models\User (optional) |
+| model_id | Text | 1 (optional) |
+
+**Success Response** `201 Created`:
+```json
+{
+    "message": "Media uploaded successfully",
+    "data": {
+        "id": 1,
+        "user_id": 1,
+        "file_path": "media/ali@company.com/filename.png",
+        "category_id": 2,
+        "model_type": null,
+        "model_id": null,
+        "created_at": "2026-06-13T19:06:01.000000Z",
+        "updated_at": "2026-06-13T19:06:01.000000Z"
+    }
+}
+```
+
+---
+
+### 22. Delete Media
+
+**Endpoint:** `DELETE /api/media/{id}`
+
+**Request Headers:**
+```
+Authorization: Bearer {your_token_here}
+```
+
+**Success Response** `200 OK`:
+```json
+{
+    "message": "Media deleted successfully"
+}
+```
+
+---
+
+## IP Validation
+
+The system supports two levels of IP restrictions:
+
+- **Global IPs** — stored in `tracker_allowed_ips` config — applies to all users
+- **User-specific IPs** — stored in `users.allowed_ips` — applies to specific user only
+
+Both must pass when configured. Tracker routes are protected by the `validate.ip` middleware.
+
+---
+
+## Logout Restriction
+
+A user can logout only if:
+1. Global `tracker_logout_restriction` is disabled
+2. OR global restriction is enabled AND user's `can_user_logout` is `true`
 
 ---
 
@@ -446,6 +895,11 @@ All users have the default password: `password123`
 | personal_access_tokens | Sanctum API tokens |
 | user_screenshots | Screenshot records with file paths |
 | user_activities | Employee activity tracking data |
+| configs | System configuration settings |
+| user_bank_accounts | Employee bank account details |
+| user_contacts | Employee contact information |
+| categories | File and media categories |
+| media | Uploaded media files |
 
 ---
 
@@ -455,16 +909,28 @@ All users have the default password: `password123`
 employee-tracker/
 ├── app/
 │   ├── Http/
-│   │   └── Controllers/
-│   │       ├── AuthController.php              # Login & Logout logic
-│   │       ├── UserScreenshotController.php    # Screenshot upload, fetch & delete
-│   │       └── UserActivityController.php      # Activity tracking & stats
+│   │   ├── Controllers/
+│   │   │   ├── AuthController.php              # Login & Logout logic
+│   │   │   ├── CategoryController.php          # Category CRUD
+│   │   │   ├── ConfigController.php            # Configuration management
+│   │   │   ├── MediaController.php             # Media upload & management
+│   │   │   ├── UserActivityController.php      # Activity tracking & stats
+│   │   │   ├── UserBankAccountController.php   # Bank account management
+│   │   │   ├── UserContactController.php       # Contact management
+│   │   │   └── UserScreenshotController.php    # Screenshot management
+│   │   └── Middleware/
+│   │       └── ValidateTrackerIp.php           # IP validation middleware
 │   └── Models/
+│       ├── Category.php                        # Category model
+│       ├── Config.php                          # Config model
+│       ├── Media.php                           # Media model
 │       ├── User.php                            # User model with Sanctum
-│       ├── UserScreenshot.php                  # Screenshot model
-│       └── UserActivity.php                    # Activity model
+│       ├── UserActivity.php                    # Activity model
+│       ├── UserBankAccount.php                 # Bank account model
+│       ├── UserContact.php                     # Contact model
+│       └── UserScreenshot.php                  # Screenshot model
 ├── database/
-│   ├── migrations/                             # Database tables
+│   ├── migrations/                             # All database migrations
 │   └── seeders/
 │       ├── DatabaseSeeder.php                  # Runs all seeders
 │       └── UserSeeder.php                      # 10 predefined users
@@ -473,7 +939,7 @@ employee-tracker/
 ├── storage/
 │   └── app/
 │       └── public/
-│           └── screenshots/                    # Screenshot files stored here
+│           └── screenshots/                    # Screenshot files
 │               └── {user_email}/               # Organized by user email
 └── config/
     └── sanctum.php                             # Sanctum configuration
@@ -483,16 +949,30 @@ employee-tracker/
 
 ## API Routes Summary
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | /api/login | User login | No |
-| POST | /api/logout | User logout | Yes |
-| GET | /api/screenshots | Fetch screenshots | Yes |
-| POST | /api/screenshots/store | Upload screenshot | Yes |
-| POST | /api/screenshots/capture | Real-time capture | Yes |
-| POST | /api/screenshots/delete | Delete screenshot | Yes |
-| POST | /api/track/activity | Track activity | Yes |
-| GET | /api/track/activity/stats | Activity stats | Yes |
+| Method | Endpoint | Description | Auth | IP Check |
+|--------|----------|-------------|------|----------|
+| POST | /api/login | User login | No | No |
+| POST | /api/logout | User logout | Yes | No |
+| GET | /api/configs | List configs | Yes | No |
+| POST | /api/configs | Create config | Yes | No |
+| PUT | /api/configs/{key} | Update config | Yes | No |
+| GET | /api/contacts | List contacts | Yes | No |
+| POST | /api/contacts | Create contact | Yes | No |
+| PUT | /api/contacts/{id} | Update contact | Yes | No |
+| DELETE | /api/contacts/{id} | Delete contact | Yes | No |
+| GET | /api/categories | List categories | Yes | No |
+| POST | /api/categories | Create category | Yes | No |
+| PUT | /api/categories/{id} | Update category | Yes | No |
+| DELETE | /api/categories/{id} | Delete category | Yes | No |
+| GET | /api/media | List media | Yes | No |
+| POST | /api/media | Upload media | Yes | No |
+| DELETE | /api/media/{id} | Delete media | Yes | No |
+| GET | /api/screenshots | Fetch screenshots | Yes | Yes |
+| POST | /api/screenshots/store | Upload screenshot | Yes | Yes |
+| POST | /api/screenshots/capture | Real-time capture | Yes | Yes |
+| POST | /api/screenshots/delete | Delete screenshot | Yes | Yes |
+| POST | /api/track/activity | Track activity | Yes | Yes |
+| GET | /api/track/activity/stats | Activity stats | Yes | Yes |
 
 ---
 
