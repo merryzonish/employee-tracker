@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\UserActivity;
+use App\Models\UserBankAccount;
 use App\Models\UserScreenshot;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -12,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\UserContact;
+use App\Models\Media;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
@@ -50,4 +53,30 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserActivity::class);
     }
+
+    /**
+     * Get all bank accounts belonging to this user.
+     */
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(UserBankAccount::class);
+    }
+
+    /**
+ * Get all contacts belonging to this user.
+ */
+public function contacts(): HasMany
+{
+    return $this->hasMany(UserContact::class);
+}
+/**
+ * Get all media belonging to this user.
+ */
+public function media(): HasMany
+{
+    return $this->hasMany(Media::class);
+}
+
+
+
 }
